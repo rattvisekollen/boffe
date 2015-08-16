@@ -67,6 +67,7 @@ class MatvaranScraper < BaseScraper
       "ekologisk ingrediens",
       "eu-jordbruk",
       "fetthalt",
+      "bl.a.",
       "bl a",
       "innehåller också",
       "1l",
@@ -77,18 +78,22 @@ class MatvaranScraper < BaseScraper
       "inkl",
       "sötningsmedel",
       "tillsatt",
+      "naturlig arom",
       "naturliga aromer",
       "smakberedning",
       "svensk mjölkråvara",
       "produkten innehåller",
       "andra",
-      "ursprung sverige"
+      "ursprung sverige",
+      "mjölken är",
+      "kalcium bidrar till att matsmältningsenzymerna fungerar normalt",
+      "krav-"
     ]
 
     filtered_words_pattern = /(#{ filtered_words.join('|') })/
-    percent_pattern = /[0-9,]+\s*%/
+    percent_pattern = /[0-9,\.]+\s*%/
     illegal_chars_pattern = /[:\r\n\t]/
-    separator_pattern = /[\(\),.\*]/
+    separator_pattern = /[\(\),.\*®]/
 
     ingredients = ingredients.mb_chars.downcase.to_s
     ingredients = ingredients.gsub(filtered_words_pattern, "")
