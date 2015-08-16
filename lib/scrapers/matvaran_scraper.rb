@@ -11,6 +11,7 @@ class MatvaranScraper < BaseScraper
     doc = Nokogiri::HTML(response.body)
 
     anchor = doc.css(".icacontent_main").first.xpath("div")[1].xpath("div")[4]
+    anchor_text = anchor.text.mb_chars.downcase.to_s
 
     {}.tap do |product|
       product[:source] = :matvaran
@@ -26,13 +27,14 @@ class MatvaranScraper < BaseScraper
       product[:manufacturer_raw] = anchor.xpath("div")[0].xpath("a").text
       product[:manufacturer] = product[:manufacturer_raw]
 
-      product[:origin_raw] = anchor.text
-      product[:origin_raw] = product[:origin_raw].split("Ursprung")[1] if product[:origin_raw]
+      product[:origin_raw] = anchor_text
+      product[:origin_raw] = product[:origin_raw].split("ursprung")[-2] if product[:origin_raw]
+      product[:origin_raw] = product[:origin_raw].split("\.")[0] if product[:origin_raw]
       product[:origin_raw] = product[:origin_raw].strip if product[:origin_raw]
       product[:origin] = product[:origin_raw]
 
-      product[:ingredients_raw] = anchor.text
-      product[:ingredients_raw] = product[:ingredients_raw].mb_chars.downcase.to_s if product[:ingredients_raw]
+      product[:ingredients_raw] = anchor_text
+      product[:ingredients_raw] = product[:ingredients_raw] if product[:ingredients_raw]
       product[:ingredients_raw] = product[:ingredients_raw].split("ingrediensförteckning")[1] if product[:ingredients_raw]
       product[:ingredients_raw] = product[:ingredients_raw].split(/näringsinnehåll|näringsvärden/)[0] if product[:ingredients_raw]
       product[:ingredients] = parse_ingredients(product[:ingredients_raw])
@@ -51,6 +53,8 @@ class MatvaranScraper < BaseScraper
       "emulgeringsmedel",
       "förtjockningsmedel",
       "stabiliseringsmedel",
+      "surhetsreglerande medel",
+      "surhetsreglerandemedel",
       "krav- ekologisk ingrediens ej standardiserad",
       "krav-ekologisk ingrediens",
       "ej homogeniserad",
@@ -69,7 +73,16 @@ class MatvaranScraper < BaseScraper
       "1 l",
       "/mælkeprotein",
       "/mælk",
-      "/højpasteuriseret"
+      "/højpasteuriseret",
+      "inkl",
+      "sötningsmedel",
+      "tillsatt",
+      "naturliga aromer",
+      "smakberedning",
+      "svensk mjölkråvara",
+      "produkten innehåller",
+      "andra",
+      "ursprung sverige"
     ]
 
     filtered_words_pattern = /(#{ filtered_words.join('|') })/
@@ -78,11 +91,11 @@ class MatvaranScraper < BaseScraper
     separator_pattern = /[\(\),.\*]/
 
     ingredients = ingredients.mb_chars.downcase.to_s
-    ingredients = ingredients.gsub("och", " ")
+    ingredients = ingredients.gsub(filtered_words_pattern, "")
+    ingredients = ingredients.gsub("och ", "")
     ingredients = ingredients.gsub(/\s+/, " ")
     ingredients = ingredients.gsub(percent_pattern, "")
     ingredients = ingredients.gsub(illegal_chars_pattern, "")
-    ingredients = ingredients.gsub(filtered_words_pattern, "")
     ingredients = ingredients.split(separator_pattern)
     ingredients = ingredients.reject(&:blank?)
     ingredients = ingredients.map(&:strip)
