@@ -32,8 +32,9 @@ class MatvaranScraper < BaseScraper
       product[:origin] = product[:origin_raw]
 
       product[:ingredients_raw] = anchor.text
-      product[:ingredients_raw] = product[:ingredients_raw].split("Ingrediensförteckning")[1] if product[:ingredients_raw]
-      product[:ingredients_raw] = product[:ingredients_raw].split("Näringsvärden")[0] if product[:ingredients_raw]
+      product[:ingredients_raw] = product[:ingredients_raw].mb_chars.downcase.to_s if product[:ingredients_raw]
+      product[:ingredients_raw] = product[:ingredients_raw].split("ingrediensförteckning")[1] if product[:ingredients_raw]
+      product[:ingredients_raw] = product[:ingredients_raw].split(/näringsinnehåll|näringsvärden/)[0] if product[:ingredients_raw]
       product[:ingredients] = parse_ingredients(product[:ingredients_raw])
     end
   end
@@ -48,13 +49,33 @@ class MatvaranScraper < BaseScraper
       "färgämne",
       "färgämnen",
       "emulgeringsmedel",
-      "stabiliseringsmedel"
+      "förtjockningsmedel",
+      "stabiliseringsmedel",
+      "krav- ekologisk ingrediens ej standardiserad",
+      "krav-ekologisk ingrediens",
+      "ej homogeniserad",
+      "lågpastöriserad",
+      "högpastöriserad",
+      "uht-behandlad",
+      "vitaminer",
+      "berikad med",
+      "lämplig för veganer",
+      "ekologisk ingrediens",
+      "eu-jordbruk",
+      "fetthalt",
+      "bl a",
+      "innehåller också",
+      "1l",
+      "1 l",
+      "/mælkeprotein",
+      "/mælk",
+      "/højpasteuriseret"
     ]
 
-    percent_pattern = /[0-9,]+\s*%/
     filtered_words_pattern = /(#{ filtered_words.join('|') })/
-    illegal_chars_pattern = /[:\r\n\t\*]/
-    separator_pattern = /[\(\),.]/
+    percent_pattern = /[0-9,]+\s*%/
+    illegal_chars_pattern = /[:\r\n\t]/
+    separator_pattern = /[\(\),.\*]/
 
     ingredients = ingredients.mb_chars.downcase.to_s
     ingredients = ingredients.gsub("och", " ")
