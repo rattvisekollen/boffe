@@ -3,9 +3,9 @@ class ApiClient
     @base_url = "http://localhost:3000"
   end
 
-  def add_product(product)
-    HTTParty.post(
-      "#{@base_url}/products",
+  def update_product(product)
+    HTTParty.put(
+      "#{@base_url}/products/#{product[:barcode]}",
       body: {
         product: product
       }

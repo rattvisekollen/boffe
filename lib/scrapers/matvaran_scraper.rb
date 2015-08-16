@@ -1,5 +1,11 @@
 # coding: utf-8
-class MatvaranScraper
+class MatvaranScraper < BaseScraper
+  def scrape(url)
+    product = parse(url)
+
+    api_client.update_product(product)
+  end
+
   def parse(url)
     response = HTTParty.get(url)
     doc = Nokogiri::HTML(response.body)
@@ -10,16 +16,15 @@ class MatvaranScraper
 
     result[:source] = :matvaran
     result[:source_url] = url
-    result[:barcode_raw] = url.split("?").last
-    result[:barcode] = result[:barcode_raw]
+    result[:barcode] = url.split("?").last
     result[:name_raw] = doc.css(".vara").first.text
     result[:name] = result[:name_raw]
     result[:manufacturer_raw] = anchor.xpath("div")[0].xpath("a").text
     result[:manufacturer] = result[:manufacturer_raw]
 
     result[:origin_raw] = anchor.text
-    result[:origin_raw] = result[:origin_raw].split("Ursprung")[1]
-    result[:origin_raw] = result[:origin_raw].strip
+    result[:origin_raw] = result[:origin_raw].split("Ursprung")[1] if result[:origin_raw]
+    result[:origin_raw] = result[:origin_raw].strip if result[:origin_raw]
     result[:origin] = result[:origin_raw]
 
     result[:ingredients_raw] = anchor.text
