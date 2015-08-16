@@ -8,13 +8,44 @@ class MatvaranScraper
 
     result = {}
 
-    result[:barcode] = url.split("?").last
-    result[:name] = doc.css(".vara").first.text
-    result[:manufacturer] = anchor.xpath("div")[0].xpath("a").text
+    result[:source] = :matvaran
+    result[:source_url] = url
+    result[:barcode_raw] = url.split("?").last
+    result[:barcode] = result[:barcode_raw]
+    result[:name_raw] = doc.css(".vara").first.text
+    result[:name] = result[:name_raw]
+    result[:manufacturer_raw] = anchor.xpath("div")[0].xpath("a").text
+    result[:manufacturer] = result[:manufacturer_raw]
 
-    ingredients = anchor.text.split("Ingrediensförteckning")[1].split("Näringsvärden")[0].mb_chars.downcase.to_s
-    result[:ingredients] = ingredients.split(/[\(\),.]/).reject(&:blank?).map(&:strip)
+    result[:origin_raw] = anchor.text
+    result[:origin_raw] = result[:origin_raw].split("Ursprung")[1]
+    result[:origin_raw] = result[:origin_raw].strip
+    result[:origin] = result[:origin_raw]
+
+    result[:ingredients_raw] = anchor.text
+    result[:ingredients_raw] = result[:ingredients_raw].split("Ingrediensförteckning")[1] if result[:ingredients_raw]
+    result[:ingredients_raw] = result[:ingredients_raw].split("Näringsvärden")[0] if result[:ingredients_raw]
+    result[:ingredients] = parse_ingredients(result[:ingredients_raw])
 
     result
+  end
+
+  def parse_ingredients(ingredients)
+    return [] if ingredients.blank?
+
+    filtered_words = ["ingredienser", "garnering", "konserveringsmedel", "färgämne", "färgämnen"]
+
+    percent_pattern = /[0-9,]+\s*%/
+    filtered_words_pattern = /(#{ filtered_words.join('|') })/
+    illegal_chars_pattern = /[:\r\n\t]/
+    separator_pattern = /[\(\),.]|och/
+
+    ingredients = ingredients.mb_chars.downcase.to_s
+    ingredients = ingredients.gsub(percent_pattern, "")
+    ingredients = ingredients.gsub(illegal_chars_pattern, "")
+    ingredients = ingredients.gsub(filtered_words_pattern, "")
+    ingredients = ingredients.split(separator_pattern)
+    ingredients = ingredients.reject(&:blank?)
+    ingredients = ingredients.map(&:strip)
   end
 end
