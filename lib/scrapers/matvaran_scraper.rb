@@ -22,16 +22,16 @@ class MatvaranScraper < BaseScraper
       product[:img_url] = doc.css(".opacity.fancyBoxAuto")[0].xpath("img").first.attributes["src"].value
 
       product[:name_raw] = doc.css(".vara").first.text
-      product[:name] = product[:name_raw]
+      product[:name] = product[:name_raw].mb_chars.downcase.to_s if product[:name_raw]
 
       product[:brand_raw] = anchor.xpath("div")[0].xpath("a").text
-      product[:brand] = product[:brand_raw]
+      product[:brand] = product[:brand_raw].mb_chars.downcase.to_s if product[:brand_raw]
 
       product[:origin_raw] = anchor_text
       product[:origin_raw] = product[:origin_raw].split("ursprung")[-2] if product[:origin_raw]
       product[:origin_raw] = product[:origin_raw].split("\.")[0] if product[:origin_raw]
       product[:origin_raw] = product[:origin_raw].strip if product[:origin_raw]
-      product[:origin] = product[:origin_raw]
+      product[:origin] = product[:origin_raw].mb_chars.downcase.to_s if product[:origin_raw]
 
       product[:ingredients_raw] = anchor_text
       product[:ingredients_raw] = product[:ingredients_raw] if product[:ingredients_raw]
