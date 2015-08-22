@@ -46,23 +46,33 @@ class MatvaranScraper < BaseScraper
   def parse_ingredients(ingredients)
     return [] if ingredients.blank?
 
-    filtered_words_pattern = /(#{ word_filter_before.join('|') })/
+    filtered_words_pattern = /(#{ (word_filter_before + word_filter_nordic).join('|') })/
     percent_pattern = /[0-9,\.]+\s*%/
     illegal_chars_pattern = /[:\r\n\t]/
-    separator_pattern = /[\(\),.\*®\|]/
+    separator_pattern = /[\(\);,.\*®\|]/
 
     ingredients = ingredients.mb_chars.downcase.to_s
     ingredients = ingredients.gsub(filtered_words_pattern, "")
-    word_replacements.each { |a, b| ingredients = ingredients.gsub(a, b) }
+    word_replacements.each do |a, b|
+      ingredients = ingredients.gsub(a, b)
+    end
     ingredients = ingredients.gsub("och ", ",")
     ingredients = ingredients.gsub(/\s+/, " ")
-    ingredients = ingredients.gsub(percent_pattern, "")
+    ingredients = ingredients.gsub(percent_pattern, ",")
     ingredients = ingredients.gsub(illegal_chars_pattern, "")
     ingredients = ingredients.split(separator_pattern)
     ingredients = ingredients.reject(&:blank?)
     ingredients = ingredients.map(&:strip)
-    ingredients = ingredients.reject { |s| s.start_with?("motsvarar") }
+    word_filter_prefixes.each do |pre|
+      ingredients = ingredients.map { |s| s.start_with?(pre) ? s.gsub(pre, "") : s }
+    end
+    word_filter_suffixes.each do |suf|
+      ingredients = ingredients.map { |s| s.end_with?(suf) ? s.gsub(suf, "") : s }
+    end
+    ingredients = ingredients.map(&:strip)
     ingredients = ingredients - word_filter_after
+    ingredients = ingredients.uniq
+    ingredients = ingredients.reject(&:blank?)
   end
 
   def word_filter_before
@@ -70,18 +80,52 @@ class MatvaranScraper < BaseScraper
       "ingredienser",
       "lågpastöriserad",
       "högpastöriserad",
+      "stabiliseringsmedel",
       "berikad med",
+      "tag ur pizzan ur förpackningen och värm i ugn på 225°c i ca 9-10 min eller tills osten smält",
       "bl.a.",
       "bl a",
       "innehåller också",
       "1l",
       "1 l",
+    ]
+  end
+
+  def word_filter_nordic
+    [
       "/mælkeprotein",
       "/mælk",
       "/højpasteuriseret",
       "/jordbær",
       "/hyldebær-",
       "/piskefløde",
+      "/sukker",
+      "/mysepulver",
+      "/rosin",
+      "/sødestoffer",
+      "/søtningsstoffer",
+      "/hærdet",
+      "/herdet",
+      "/voks",
+      "/emulgator",
+      "/farvestof",
+      "/sojabønnelecitin",
+      "/fortykningsmiddel",
+      "/overfadebehandlingmiddel",
+      "/hvetemel",
+      "/hvedemel",
+      "/vegetabilske",
+      "/oljer",
+      "/olier",
+      "/palme",
+      "/kokos",
+      "/sirup",
+      "/bakepulver",
+      "/bagepulver",
+      "/ingefær",
+      "/kryddernelliker",
+      "/kan inneholde spor av mandler",
+      "/kan indeholde spor af mandler",
     ]
   end
 
@@ -97,7 +141,6 @@ class MatvaranScraper < BaseScraper
       "färgämnen",
       "emulgeringsmedel",
       "förtjockningsmedel",
-      "stabiliseringsmedel",
       "surhetsreglerande medel",
       "surhetsreglerandemedel",
       "krav- ekologisk ingrediens ej standardiserad",
@@ -130,12 +173,62 @@ class MatvaranScraper < BaseScraper
       "ekologisk ingrediens",
       "syra",
       "vatten",
+      "arom",
+      "från mjölk",
+      "av mjölk",
+      "tre ankare",
+      "smakförstärkare",
+      "förtjocknings-/fortykningsmiddel",
+      "ytbehandlings-/overfladebehandlingsmidler",
+      "fuktighetsbevarande medel",
+      "delvis härdade vegetabiliska fetter",
+      "vegetabiliska oljor",
+      "30 gram",
+      "ätfärdig",
+      "salt av arspartam - acesulfam",
+      "gummibas",
+      "sv/no/dk",
+      "fiskad i nordostatlanten fångstzon 27",
+    ]
+  end
+
+  def word_filter_prefixes
+    [
+      "motsvarar",
+      "minst",
+      "hackade",
+      "hackad",
+      "naturlig",
+      "naturliga",
+      "sötningsmedel",
+      "förtjockningsmedel",
+      "fuktighetsbevarande medel",
+      "fyllnadsmedel",
+      "färgämne",
+      "surhetsreglerande medel",
+      "ytbehandlingsmedel",
+      "antioxidationsmedel",
+      "antioxidantmedel",
+      "innehåller",
+      "kokt",
+      "rökt",
+    ]
+  end
+
+  def word_filter_suffixes
+    [
+      "med",
     ]
   end
 
   def word_replacements
     {
-      "gris- och nötkött" => "griskött, nötkött"
+      "gris- och nötkött" => "griskött, nötkött",
+      "portionssnus dosa" => "portionssnus",
+      "shea" => "sheaolja",
+      "palm" => "palmolja",
+      "raps" => "rapsolja",
+      "kokosnöt" => "kokosnötsolja",
     }
   end
 end
