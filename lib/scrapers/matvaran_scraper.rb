@@ -46,7 +46,25 @@ class MatvaranScraper < BaseScraper
   def parse_ingredients(ingredients)
     return [] if ingredients.blank?
 
-    filtered_words = [
+    filtered_words_pattern = /(#{ filtered_words.join('|') })/
+    percent_pattern = /[0-9,\.]+\s*%/
+    illegal_chars_pattern = /[:\r\n\t]/
+    separator_pattern = /[\(\),.\*®]/
+
+    ingredients = ingredients.mb_chars.downcase.to_s
+    ingredients = ingredients.gsub(filtered_words_pattern, "")
+    ingredients = ingredients.gsub("och ", "")
+    ingredients = ingredients.gsub(/\s+/, " ")
+    ingredients = ingredients.gsub(percent_pattern, "")
+    ingredients = ingredients.gsub(illegal_chars_pattern, "")
+    ingredients = ingredients.split(separator_pattern)
+    ingredients = ingredients.reject(&:blank?)
+    ingredients = ingredients.map(&:strip)
+    ingredients = ingredients.reject { |s| s.start_with?("motsvarar") }
+  end
+
+  def filtered_words
+    [
       "ingredienser",
       "garnering",
       "konserveringsmedel",
@@ -91,21 +109,5 @@ class MatvaranScraper < BaseScraper
       "kalcium bidrar till att matsmältningsenzymerna fungerar normalt",
       "krav-"
     ]
-
-    filtered_words_pattern = /(#{ filtered_words.join('|') })/
-    percent_pattern = /[0-9,\.]+\s*%/
-    illegal_chars_pattern = /[:\r\n\t]/
-    separator_pattern = /[\(\),.\*®]/
-
-    ingredients = ingredients.mb_chars.downcase.to_s
-    ingredients = ingredients.gsub(filtered_words_pattern, "")
-    ingredients = ingredients.gsub("och ", "")
-    ingredients = ingredients.gsub(/\s+/, " ")
-    ingredients = ingredients.gsub(percent_pattern, "")
-    ingredients = ingredients.gsub(illegal_chars_pattern, "")
-    ingredients = ingredients.split(separator_pattern)
-    ingredients = ingredients.reject(&:blank?)
-    ingredients = ingredients.map(&:strip)
-    ingredients = ingredients.reject { |s| s.start_with?("motsvarar") }
   end
 end
