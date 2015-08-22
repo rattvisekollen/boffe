@@ -24,8 +24,8 @@ class MatvaranScraper < BaseScraper
       product[:name_raw] = doc.css(".vara").first.text
       product[:name] = product[:name_raw]
 
-      product[:manufacturer_raw] = anchor.xpath("div")[0].xpath("a").text
-      product[:manufacturer] = product[:manufacturer_raw]
+      product[:brand_raw] = anchor.xpath("div")[0].xpath("a").text
+      product[:brand] = product[:brand_raw]
 
       product[:origin_raw] = anchor_text
       product[:origin_raw] = product[:origin_raw].split("ursprung")[-2] if product[:origin_raw]
