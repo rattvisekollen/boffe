@@ -38,6 +38,8 @@ class MatvaranScraper < BaseScraper
       product[:ingredients_raw] = product[:ingredients_raw].split("ingrediensförteckning")[1] if product[:ingredients_raw]
       product[:ingredients_raw] = product[:ingredients_raw].split(/näringsinnehåll|näringsvärden/)[0] if product[:ingredients_raw]
       product[:ingredients] = parse_ingredients(product[:ingredients_raw])
+
+      product[:eu_organic] = true if doc.css("img[src*='http://static.matvaran.se/ica_produkt/eulovet.png']").any?
     end
   end
 
