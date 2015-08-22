@@ -46,14 +46,15 @@ class MatvaranScraper < BaseScraper
   def parse_ingredients(ingredients)
     return [] if ingredients.blank?
 
-    filtered_words_pattern = /(#{ filtered_words.join('|') })/
+    filtered_words_pattern = /(#{ word_filter_before.join('|') })/
     percent_pattern = /[0-9,\.]+\s*%/
     illegal_chars_pattern = /[:\r\n\t]/
-    separator_pattern = /[\(\),.\*®]/
+    separator_pattern = /[\(\),.\*®\|]/
 
     ingredients = ingredients.mb_chars.downcase.to_s
     ingredients = ingredients.gsub(filtered_words_pattern, "")
-    ingredients = ingredients.gsub("och ", "")
+    word_replacements.each { |a, b| ingredients = ingredients.gsub(a, b) }
+    ingredients = ingredients.gsub("och ", ",")
     ingredients = ingredients.gsub(/\s+/, " ")
     ingredients = ingredients.gsub(percent_pattern, "")
     ingredients = ingredients.gsub(illegal_chars_pattern, "")
@@ -61,11 +62,35 @@ class MatvaranScraper < BaseScraper
     ingredients = ingredients.reject(&:blank?)
     ingredients = ingredients.map(&:strip)
     ingredients = ingredients.reject { |s| s.start_with?("motsvarar") }
+    ingredients = ingredients - word_filter_after
   end
 
-  def filtered_words
+  def word_filter_before
     [
       "ingredienser",
+      "lågpastöriserad",
+      "högpastöriserad",
+      "berikad med",
+      "bl.a.",
+      "bl a",
+      "innehåller också",
+      "1l",
+      "1 l",
+      "/mælkeprotein",
+      "/mælk",
+      "/højpasteuriseret",
+      "/jordbær",
+      "/hyldebær-",
+      "/piskefløde",
+    ]
+  end
+
+  def word_filter_after
+    [
+      "uht-behandlad",
+      "eu-jordbruk",
+      "fetthalt",
+      "ej homogeniserad",
       "garnering",
       "konserveringsmedel",
       "färgämne",
@@ -77,37 +102,40 @@ class MatvaranScraper < BaseScraper
       "surhetsreglerandemedel",
       "krav- ekologisk ingrediens ej standardiserad",
       "krav-ekologisk ingrediens",
-      "ej homogeniserad",
-      "lågpastöriserad",
-      "högpastöriserad",
-      "uht-behandlad",
-      "vitaminer",
-      "berikad med",
-      "lämplig för veganer",
-      "ekologisk ingrediens",
-      "eu-jordbruk",
-      "fetthalt",
-      "bl.a.",
-      "bl a",
-      "innehåller också",
-      "1l",
-      "1 l",
-      "/mælkeprotein",
-      "/mælk",
-      "/højpasteuriseret",
+      "se",
+      "dk",
+      "kryddextrakter",
+      "kryddextrakt",
+      "antioxidationsmedel",
+      "kryddor",
+      "bärberedning",
+      "färg",
+      "aromer",
+      "kalcium bidrar till att matsmältningsenzymerna fungerar normalt",
+      "naturlig arom",
+      "naturliga aromer",
       "inkl",
       "sötningsmedel",
       "tillsatt",
-      "naturlig arom",
-      "naturliga aromer",
       "smakberedning",
       "svensk mjölkråvara",
       "produkten innehåller",
       "andra",
       "ursprung sverige",
+      "svenskt",
       "mjölken är",
-      "kalcium bidrar till att matsmältningsenzymerna fungerar normalt",
-      "krav-"
+      "krav-",
+      "vitaminer",
+      "lämplig för veganer",
+      "ekologisk ingrediens",
+      "syra",
+      "vatten",
     ]
+  end
+
+  def word_replacements
+    {
+      "gris- och nötkött" => "griskött, nötkött"
+    }
   end
 end
